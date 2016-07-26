@@ -70,28 +70,6 @@
     [self.segmentedControl moveTo:0 withAnimation:NO sender:nil];
 }
 
-// Help function
-- (CGFloat)pageViewDraggingRatio:(UIScrollView *)scrollView
-{
-    /*         ->
-     -----------------
-     |   |███|   |   |   segment control
-     -----------------
-     /    \
-     /      \
-     -----------------
-     |   pageView    |   One page dragging invoke segment move a seg width portion
-     |               |   (this case is 0.25 to 0.5)
-     -----------------
-     ->
-     */
-    CGFloat segmentStartRatio = self.segmentedControl.selectedIndex * 1.0f / self.filterControllers.count;
-    // pageView content offset start from scrollView.frame
-    CGFloat draggingOffset = scrollView.contentOffset.x - CGRectGetWidth(scrollView.frame);
-    CGFloat draggingRatio = draggingOffset / self.filterControllers.count / CGRectGetWidth(scrollView.frame);
-    return segmentStartRatio + draggingRatio;
-}
-
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
     if (!scrollView.isDecelerating) {

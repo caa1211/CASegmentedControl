@@ -10,11 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CASegmentedControl/ViewController.m"
-            timestampString = "491210582.652622"
+            timestampString = "491216582.347173"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "153"
-            endingLineNumber = "153"
+            startingLineNumber = "132"
+            endingLineNumber = "132"
             landmarkName = "-pageViewController:viewControllerAfterViewController:"
             landmarkType = "5">
          </BreakpointContent>
@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CASegmentedControl/ViewController.m"
-            timestampString = "491210582.652622"
+            timestampString = "491216582.347173"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "188"
-            endingLineNumber = "188">
+            startingLineNumber = "167"
+            endingLineNumber = "167">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -56,11 +56,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CASegmentedControl/ViewController.m"
-            timestampString = "491210582.652622"
+            timestampString = "491216582.347173"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "132"
-            endingLineNumber = "132"
+            startingLineNumber = "111"
+            endingLineNumber = "111"
             landmarkName = "-scrollViewDidEndDecelerating:"
             landmarkType = "5">
          </BreakpointContent>
@@ -72,11 +72,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CASegmentedControl/ViewController.m"
-            timestampString = "491210582.652622"
+            timestampString = "491216582.347173"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "183"
-            endingLineNumber = "183"
+            startingLineNumber = "162"
+            endingLineNumber = "162"
             landmarkName = "-segmentedControl:didMoveTo:from:"
             landmarkType = "5">
          </BreakpointContent>
@@ -88,11 +88,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CASegmentedControl/ViewController.m"
-            timestampString = "491210582.652622"
+            timestampString = "491216582.347173"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "168"
-            endingLineNumber = "168"
+            startingLineNumber = "147"
+            endingLineNumber = "147"
             landmarkName = "-segmentedControl:willMoveTo:from:sender:"
             landmarkType = "5">
          </BreakpointContent>
