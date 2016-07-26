@@ -158,7 +158,7 @@
     return nil;
 }
 
-#pragma mark - UIPageViewControllerDataSource
+#pragma mark - EMOSegmentedControlDelegate
 - (void)segmentedControl:(CASegmentedControl *)segmentedControl willMoveTo:(NSUInteger)to from:(NSUInteger)from sender:sender{
     
     if (sender==self) {
