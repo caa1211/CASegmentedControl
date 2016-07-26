@@ -14,7 +14,19 @@
         <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
             <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
             <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="VC1" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="lsR-cu-dFb">
+                    <rect key="frame" x="264" y="276" width="72" height="48"/>
+                    <fontDescription key="fontDescription" type="system" pointSize="40"/>
+                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                    <nil key="highlightedColor"/>
+                </label>
+            </subviews>
             <color key="backgroundColor" red="0.98816180626818451" green="1" blue="0.49147634461009826" alpha="1" colorSpace="calibratedRGB"/>
+            <constraints>
+                <constraint firstItem="lsR-cu-dFb" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="7cY-nx-CAI"/>
+                <constraint firstItem="lsR-cu-dFb" firstAttribute="centerY" secondItem="i5M-Pr-FkT" secondAttribute="centerY" id="aOs-DZ-drT"/>
+            </constraints>
         </view>
     </objects>
 </document>

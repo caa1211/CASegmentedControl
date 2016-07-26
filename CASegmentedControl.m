@@ -14,14 +14,6 @@
 @property (nonatomic) NSMutableArray *labels;
 @property (nonatomic) UIView *sliderView;
 @property (nonatomic) UIView *backgroundView;
-@property (nonatomic) UIColor *sliderColor;
-@property (nonatomic) UIColor *sliderTextTopColor;
-@property (nonatomic) UIColor *sliderTextColor;
-@property (nonatomic) CGFloat cornerRadius;
-@property (nonatomic) NSInteger animationTime;
-
-@property (nonatomic) UIColor *backgroundColor;
-@property (nonatomic) CGFloat padding;
 @end
 
 @implementation CASegmentedControl
@@ -44,15 +36,17 @@
 }
 
 - (void)setupUI {
+    
     // Default value
     self.cornerRadius = 6.0;
     self.padding = 1;
-    self.animationTime = 300;
+    self.animationTime = 0.2;
     self.backgroundColor = [UIColor greenColor];
     self.sliderColor = [UIColor yellowColor];
     self.sliderTextColor = [UIColor grayColor];
     self.sliderTextTopColor = [UIColor blueColor];
     self.clipsToBounds = YES;
+    self.font = [UIFont systemFontOfSize:12];
     
     self.backgroundView = [[UIView alloc] init];
     self.backgroundView.backgroundColor = self.backgroundColor;
@@ -65,6 +59,7 @@
         UILabel *label = [[UILabel alloc] init];
         label.tag = i;
         label.text = string;
+        label.font = self.font;
         label.adjustsFontSizeToFitWidth = YES;
         label.textAlignment = NSTextAlignmentCenter;
         label.textColor = self.sliderTextColor;
@@ -75,7 +70,7 @@
         [label addGestureRecognizer:tap];
         label.userInteractionEnabled = YES;
     }
-
+    
     
     self.sliderView = [[UIView alloc] init];
     self.sliderView.backgroundColor = self.sliderColor;
@@ -86,6 +81,7 @@
     for (NSString *string in self.strings) {
         UILabel *label = [[UILabel alloc] init];
         label.text = string;
+        label.font = self.font;
         label.adjustsFontSizeToFitWidth = YES;
         label.textColor = self.sliderTextTopColor;
         label.textAlignment = NSTextAlignmentCenter;
@@ -97,12 +93,11 @@
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-
-    self.backgroundView.backgroundColor = self.backgroundColor;
-    self.sliderView.backgroundColor = self.sliderColor;
     
     self.backgroundView.frame = [self convertRect:self.frame fromView:self.superview];
     
+    self.backgroundView.backgroundColor = self.backgroundColor;
+    self.sliderView.backgroundColor = self.sliderColor;
     self.layer.cornerRadius = self.cornerRadius;
     self.backgroundView.layer.cornerRadius = self.cornerRadius;
     self.sliderView.layer.cornerRadius = self.cornerRadius;
@@ -115,6 +110,7 @@
         UILabel *label = self.labels[i];
         label.frame = CGRectMake(i * sliderWidth, 0, sliderWidth, self.frame.size.height);
         label.textColor = self.sliderTextColor;
+        label.font = self.font;
     }
     
     for (int j = 0; j < [self.topLabels count]; j++) {
@@ -122,17 +118,36 @@
         CGPoint topLabelPos = [self.sliderView convertPoint:CGPointMake(j * sliderWidth, 0) fromView:self.backgroundView];
         label.frame = CGRectMake(topLabelPos.x, - self.padding, sliderWidth, self.frame.size.height);
         label.textColor = self.sliderTextTopColor;
+        label.font = self.font;
     }
 }
 
-- (void)selectToIndex:(NSUInteger)selectedIndex withAnimation:(BOOL)isAnimation
+- (void)selectToIndex:(NSUInteger)index withAnimation:(BOOL)isAnimation sender:(id)sender
 {
+    NSUInteger fromIndex = self.selectedIndex;
     
-//    if (self.willBePressedHandlerBlock) {
-//        self.willBePressedHandlerBlock(selectedIndex);
-//    }
+    if([self.delegate respondsToSelector:@selector(segmentedControl:willMoveTo:from:sender:)]) {
+        [self.delegate segmentedControl:self willMoveTo:index from:fromIndex sender:sender];
+    }
     
-    [UIView animateWithDuration:0.25 delay:0.0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+    _selectedIndex = index;
+    
+    if (isAnimation) {
+        [UIView animateWithDuration:self.animationTime delay:0 options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut animations:^{
+            CGFloat sliderWidth = self.frame.size.width / [self.strings count];
+            CGRect oldFrame = self.sliderView.frame;
+            CGRect newFrame = CGRectMake(sliderWidth * self.selectedIndex + self.padding, self.backgroundView.frame.origin.y + self.padding, sliderWidth - self.padding * 2, self.frame.size.height - self.padding * 2);
+            CGRect offRect = CGRectMake(newFrame.origin.x - oldFrame.origin.x, newFrame.origin.y - oldFrame.origin.y, 0, 0);
+            self.sliderView.frame = newFrame;
+            for (UILabel *label in self.topLabels) {
+                label.frame = CGRectMake(label.frame.origin.x - offRect.origin.x, label.frame.origin.y - offRect.origin.y, label.frame.size.width, label.frame.size.height);
+            }
+        } completion:^(BOOL finished) {
+            if([self.delegate respondsToSelector:@selector(segmentedControl:didMoveTo:from:sender:)]) {
+                [self.delegate segmentedControl:self didMoveTo:index from:fromIndex sender:sender];
+            }
+        }];
+    } else {
         CGFloat sliderWidth = self.frame.size.width / [self.strings count];
         CGRect oldFrame = self.sliderView.frame;
         CGRect newFrame = CGRectMake(sliderWidth * self.selectedIndex + self.padding, self.backgroundView.frame.origin.y + self.padding, sliderWidth - self.padding * 2, self.frame.size.height - self.padding * 2);
@@ -141,31 +156,27 @@
         for (UILabel *label in self.topLabels) {
             label.frame = CGRectMake(label.frame.origin.x - offRect.origin.x, label.frame.origin.y - offRect.origin.y, label.frame.size.width, label.frame.size.height);
         }
-    } completion:^(BOOL finished) {
-        
-//        if (self.handlerBlock && callHandler) {
-//            self.handlerBlock(selectedIndex);
-//        }
-    }];
+        if([self.delegate respondsToSelector:@selector(segmentedControl:didMoveTo:from:sender:)]) {
+            [self.delegate segmentedControl:self didMoveTo:index from:fromIndex sender:sender];
+        }
+    }
 }
 
 - (void)handleTap:(UITapGestureRecognizer *)rec {
-    self.selectedIndex = rec.view.tag;
-    [self selectToIndex:self.selectedIndex withAnimation:YES];
+    [self selectToIndex:rec.view.tag withAnimation:YES sender:self];
 }
 
-- (void)animateToIndex:(NSUInteger)index {
-    self.selectedIndex = index;
-    [self selectToIndex:self.selectedIndex withAnimation:YES];
+- (void)moveTo:(NSUInteger)index sender:(id)sender{
+    [self selectToIndex:index withAnimation:YES sender:sender];
 }
 
-//- (void)updateIndicatorWithProgress:(CGFloat)progress state:(EMOSegmentedControlState)state{
-//
-//}
+- (void)moveTo:(NSUInteger)index withAnimation:(BOOL)isAnimated sender:(id)sender {
+    [self selectToIndex:index withAnimation:isAnimated sender:sender];
+}
 
 - (void)updateIndicatorWithProgress:(CGFloat)progress {
     CGFloat sliderWidth = self.frame.size.width / [self.strings count];
-      CGRect curFrame = self.sliderView.frame;
+    CGRect curFrame = self.sliderView.frame;
     
     CGRect oldFrame = CGRectMake(sliderWidth * self.selectedIndex, curFrame.origin.y, curFrame.size.width, curFrame.size.height);
     
@@ -180,99 +191,5 @@
         label.frame = CGRectMake(label.frame.origin.x - offRect.origin.x, label.frame.origin.y - offRect.origin.y, label.frame.size.width, label.frame.size.height);
     }
 }
-
-
-- (void)sliderPan:(UIPanGestureRecognizer *)rec {
-    if (rec.state == UIGestureRecognizerStateChanged) {
-        CGRect oldFrame = self.sliderView.frame;
-        
-        CGFloat minPos = 0 + self.padding;
-        CGFloat maxPos = self.frame.size.width - self.padding - self.sliderView.frame.size.width;
-        
-        CGPoint center = rec.view.center;
-        CGPoint translation = [rec translationInView:rec.view];
-        
-        center = CGPointMake(center.x + translation.x, center.y);
-        rec.view.center = center;
-        [rec setTranslation:CGPointZero inView:rec.view];
-        
-        if (self.sliderView.frame.origin.x < minPos) {
-            
-            self.sliderView.frame = CGRectMake(minPos, self.sliderView.frame.origin.y, self.sliderView.frame.size.width, self.sliderView.frame.size.height);
-            
-        } else if (self.sliderView.frame.origin.x > maxPos) {
-            
-            self.sliderView.frame = CGRectMake(maxPos, self.sliderView.frame.origin.y, self.sliderView.frame.size.width, self.sliderView.frame.size.height);
-        }
-        
-        CGRect newFrame = self.sliderView.frame;
-        CGRect offRect = CGRectMake(newFrame.origin.x - oldFrame.origin.x, newFrame.origin.y - oldFrame.origin.y, 0, 0);
-        
-        for (UILabel *label in self.topLabels) {
-            
-            label.frame = CGRectMake(label.frame.origin.x - offRect.origin.x, label.frame.origin.y - offRect.origin.y, label.frame.size.width, label.frame.size.height);
-        }
-        
-    } else if (rec.state == UIGestureRecognizerStateEnded || rec.state == UIGestureRecognizerStateCancelled || rec.state == UIGestureRecognizerStateFailed) {
-        
-        NSMutableArray *distances = [[NSMutableArray alloc] init];
-        
-        for (int i = 0; i < [self.strings count]; i++) {
-            
-            CGFloat possibleX = i * self.sliderView.frame.size.width;
-            CGFloat distance = possibleX - self.sliderView.frame.origin.x;
-            [distances addObject:@(fabs(distance))];
-        }
-        
-        NSNumber *num = [distances valueForKeyPath:@"@min.doubleValue"];
-        NSInteger index = [distances indexOfObject:num];
-        
-//        if (self.willBePressedHandlerBlock) {
-//            self.willBePressedHandlerBlock(index);
-//        }
-        
-        CGFloat sliderWidth = self.frame.size.width / [self.strings count];
-        CGFloat desiredX = sliderWidth * index + self.padding;
-        
-        if (self.sliderView.frame.origin.x != desiredX) {
-            
-            CGRect evenOlderFrame = self.sliderView.frame;
-            
-            CGFloat distance = desiredX - self.sliderView.frame.origin.x;
-            CGFloat time = fabs(distance / self.animationTime);
-            
-            [UIView animateWithDuration:time animations:^{
-                
-                self.sliderView.frame = CGRectMake(desiredX, self.sliderView.frame.origin.y, self.sliderView.frame.size.width, self.sliderView.frame.size.height);
-                
-                CGRect newFrame = self.sliderView.frame;
-                
-                CGRect offRect = CGRectMake(newFrame.origin.x - evenOlderFrame.origin.x, newFrame.origin.y - evenOlderFrame.origin.y, 0, 0);
-                
-                for (UILabel *label in self.topLabels) {
-                    
-                    label.frame = CGRectMake(label.frame.origin.x - offRect.origin.x, label.frame.origin.y - offRect.origin.y, label.frame.size.width, label.frame.size.height);
-                }
-            } completion:^(BOOL finished) {
-                
-                self.selectedIndex = index;
-                
-//                if (self.handlerBlock) {
-//                    self.handlerBlock(index);
-//                }
-                
-            }];
-            
-        } else {
-            
-            self.selectedIndex = index;
-            
-//            if (self.handlerBlock) {
-//                self.handlerBlock(self.selectedIndex);
-//            }
-        }
-    }
-}
-
 
 @end

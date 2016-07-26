@@ -11,7 +11,7 @@
 #import "VC1.h"
 #import "VC2.h"
 
-@interface ViewController () <UIPageViewControllerDelegate, UIPageViewControllerDataSource, UIScrollViewDelegate>
+@interface ViewController () <UIPageViewControllerDelegate, UIPageViewControllerDataSource, UIScrollViewDelegate, EMOSegmentedControlDelegate>
 @property (nonatomic) UIPageViewController *pageViewController;
 @property (nonatomic, strong) NSArray *filterControllers;
 @property (nonatomic, weak) UIScrollView *pageViewControllerScrollView;
@@ -24,11 +24,14 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
    
-    self.segmentedControl = [[CASegmentedControl alloc] initWithStrings:@[@"AAA", @"BBB"]];
+    self.segmentedControl = [[CASegmentedControl alloc] initWithStrings:@[@"VC1", @"VC2"]];
     NSInteger margin = 100;
      self.segmentedControl.frame = CGRectMake(margin, 100, self.view.frame.size.width - margin * 2, 30);
     [self.view addSubview: self.segmentedControl];
-
+    self.segmentedControl.delegate = self;
+    self.segmentedControl.font = [UIFont systemFontOfSize:22];
+    self.segmentedControl.cornerRadius = 5;
+    self.segmentedControl.sliderTextColor = [UIColor redColor];
     
     self.pageViewController = [[UIPageViewController alloc] initWithTransitionStyle:UIPageViewControllerTransitionStyleScroll navigationOrientation:UIPageViewControllerNavigationOrientationHorizontal options:nil];
     self.pageViewController.dataSource = self;
@@ -62,6 +65,9 @@
     self.filterControllers = @[vc1, vc2];
     
     [self.pageViewController setViewControllers: @[vc1] direction:UIPageViewControllerNavigationDirectionForward animated:NO completion:nil];
+    
+    // Default index setup
+    [self.segmentedControl moveTo:0 withAnimation:NO sender:nil];
 }
 
 // Help function
@@ -86,51 +92,21 @@
     return segmentStartRatio + draggingRatio;
 }
 
-- (void)pageViewController:(UIPageViewController *)pageViewController willTransitionToViewControllers:(NSArray<UIViewController *> *)pendingViewControllers {
-
- NSLog(@"======willTransitionToViewControllers==================");
-}
-//
-- (void)pageViewController:(UIPageViewController *)pageViewController didFinishAnimating:(BOOL)finished previousViewControllers:(NSArray<UIViewController *> *)previousViewControllers transitionCompleted:(BOOL)completed {
-    
-     self.pageControlIsDragging = NO;
-//    if (completed) {
-    UIViewController *currentVC = self.pageViewController.viewControllers[0];
-    NSUInteger currentIndex = [self.filterControllers indexOfObject:currentVC];
-    [self.segmentedControl animateToIndex: currentIndex];
-//   }
-}
-
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
 {
-   self.pageControlIsDragging = YES;
+    if (!scrollView.isDecelerating) {
+        //for sync menuslider, use pageControlIsDragging instead of scrollView.isDragging
+        self.pageControlIsDragging = YES;
+    }
 }
-
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-  
-//    NSLog(@"=======%f====================", scrollView.contentOffset.x);
-//    NSLog(@"=======%f====================", ( scrollView.contentOffset.x/scrollView.frame.size.width)-1 );
     CGFloat progress = scrollView.contentOffset.x/scrollView.frame.size.width;
-    
 
-    
-    if (self.pageControlIsDragging) {
+    if (self.pageControlIsDragging&& scrollView.contentOffset.x && fmod(scrollView.contentOffset.x, CGRectGetWidth(scrollView.frame))) {
          [self.segmentedControl updateIndicatorWithProgress:progress-1];
-           NSLog(@"=======%f====================", progress-1);
     }
-   
-    
-
-//    if (scrollView.contentOffset.x && fmod(scrollView.contentOffset.x, CGRectGetWidth(scrollView.frame))) {
-//          CGFloat ratio = [self pageViewDraggingRatio:scrollView];
-//        
-//         NSLog(@"=======%f====================",ratio);
-//        // Todo: segmentControl transition
-//        //        [self.segmentControl updateIndicatorWithProgress:ratio];
-//    }
 }
-
 
 - (NSUInteger)centerPageIndex
 {
@@ -147,43 +123,29 @@
             *stop = YES;
         }
     }];
-    NSLog(@"===========pageIndex===%ld============", pageIndex);
     return pageIndex;
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
 {
-   
-//    if (!decelerate) {
-//        self.pageControlIsDragging = NO;
-//        [self.segmentedControl selectToIndex:[self centerPageIndex] withAnimation:YES];
-//    }
+    self.pageViewController.view.userInteractionEnabled = NO;
 }
 
-//- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
-//{
-//    self.pageControlIsDragging = NO;
-//    UIViewController *currentVC = self.pageViewController.viewControllers[0];
-//    NSUInteger currentIndex = [self.filterControllers indexOfObject:currentVC];
-//    [self.segmentedControl animateToIndex: currentIndex];
-//
-//}
-
-//- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
-//{
-// 
-//}
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
+{
+    self.pageViewController.view.userInteractionEnabled = YES;
+    self.pageControlIsDragging = NO;
+    [self.segmentedControl moveTo:[self centerPageIndex] sender:self];
+}
 
 #pragma mark - UIPageViewControllerDataSource
 
 - (nullable UIViewController *)pageViewController:(UIPageViewController *)pageViewController viewControllerBeforeViewController:(UIViewController *)viewController
 {
-
     NSInteger currentIndex = [self.filterControllers indexOfObject:viewController];
     if (currentIndex) {
         return self.filterControllers[currentIndex - 1];
     }
-    
     return nil;
 }
 
@@ -196,6 +158,31 @@
     return nil;
 }
 
+#pragma mark - UIPageViewControllerDataSource
+- (void)segmentedControl:(CASegmentedControl *)segmentedControl willMoveTo:(NSUInteger)to from:(NSUInteger)from sender:sender{
+    
+    if (sender==self) {
+        // if change segment index by scrollView didScroll, do not need to change pageViewController again
+        return;
+    }
+    
+    UIPageViewControllerNavigationDirection direction = from < to ?  UIPageViewControllerNavigationDirectionForward : UIPageViewControllerNavigationDirectionReverse;
+    
+    __weak typeof(self) weakSelf = self;
+    
+    // reference: http://stackoverflow.com/questions/14220289/removing-a-view-controller-from-uipageviewcontroller
+    [self.pageViewController setViewControllers:@[self.filterControllers[to]] direction:direction animated:YES completion:^(BOOL finished){
+        if(finished) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [weakSelf.pageViewController setViewControllers:@[weakSelf.filterControllers[to]] direction:direction animated:NO completion:nil];// bug fix for uipageview controller
+            });
+        }
+    }];
+}
 
+- (void)segmentedControl:(CASegmentedControl *)segmentedControl didMoveTo:(NSUInteger)to from:(NSUInteger)from {
+    
+
+}
 
 @end
